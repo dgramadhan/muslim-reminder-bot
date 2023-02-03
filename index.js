@@ -8,10 +8,10 @@ const bot = new Telegraf(token);
 
 bot.command('start', ctx => {
     console.log(ctx.from)
-    bot.telegram.sendMessage(ctx.chat.id, 
+    bot.telegram.sendMessage(ctx.chat.id,
         'Selamat datang di Bot Muslim Reminder \n\n' +
         'Silahkan mengetik `jadwal shalat` untuk mengetahui jadwal shalat hari ini \n\n' +
-        'Silahkan mengetik `surat (nomor surat)` untuk menampilkan surat tersebut'  , {
+        'Silahkan mengetik `surat (nomor surat)` untuk menampilkan surat tersebut', {
     })
 })
 
@@ -51,24 +51,24 @@ bot.hears(/surat (.+)/i, async ctx => {
     var objNamaSuratIn;
     console.log(ctx.from)
 
-    try{
-        params_ayat=params_ayat.split("").slice(("surat ").split("").length).join("");
-    } catch (err){
+    try {
+        params_ayat = params_ayat.split("").slice(("surat ").split("").length).join("");
+    } catch (err) {
         console.log(err)
     }
 
     console.log(params_ayat)
-    
+
     await axios.get(`https://equran.id/api/surat/${params_ayat}`)
         .then(function (response) {
             let jumlahAyat = (response.data.ayat).length;
             objNamaSuratAr = response.data.nama
             objNamaSuratIn = response.data.nama_latin
-            for (i = 0; i < jumlahAyat; i++){
+            for (i = 0; i < jumlahAyat; i++) {
                 let objAyat = response.data.ayat[i].ar
                 let objArti = response.data.ayat[i].tr
                 let objIdn = response.data.ayat[i].idn
-                arr[i] = {objAyat, objArti, objIdn}
+                arr[i] = { objAyat, objArti, objIdn }
             }
             ayat = JSON.stringify(arr);
         })
@@ -89,6 +89,41 @@ bot.hears(/surat (.+)/i, async ctx => {
         .replaceAll('"', "")
         .replaceAll(',', "\n\n"), {
     })
+})
+
+bot.hears('daftar hadist', async ctx => {
+    let daftarHadist
+    await axios.get(`https://api.hadith.gading.dev/books`)
+        .then(function (response) {
+            let Arr = []
+            let jumlahHadist = (response.data.data).length
+            for (x=0; x < jumlahHadist; x++ ) {
+                let objNama = response.data.data[x].name
+                let objTersedia = response.data.data[x].available
+                Arr[x] = { objNama, objTersedia}
+            }       
+           
+            daftarHadist = JSON.stringify(Arr)
+            console.log(daftarHadist)
+        })
+        .catch(function (error) {
+            console.log(error);
+        })
+        .finally(function () {
+        });
+
+    console.log(ctx.from)
+    await bot.telegram.sendMessage(ctx.chat.id, "**DAFTAR BUKU HADIST**" + "\n\n" + daftarHadist  .replaceAll('[', "")
+    .replaceAll('},', "\n")
+    .replaceAll(']', "")
+    .replaceAll('{', "")
+    .replaceAll('}', "")
+    .replaceAll('objNama', "")
+    .replaceAll('objTersedia', "")
+    .replaceAll(':', "")
+    .replaceAll('"', "")
+    .replaceAll(","," ")
+  )
 })
 
 bot.launch();
