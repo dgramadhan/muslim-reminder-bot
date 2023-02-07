@@ -9,9 +9,12 @@ const bot = new Telegraf(token);
 bot.command('start', ctx => {
     console.log(ctx.from)
     bot.telegram.sendMessage(ctx.chat.id,
-        'Selamat datang di Bot Muslim Reminder \n\n' +
+        "*Selamat datang di Bot Muslim Reminder* \n\n" +
         'Silahkan mengetik `jadwal shalat` untuk mengetahui jadwal shalat hari ini \n\n' +
-        'Silahkan mengetik `surat (nomor surat)` untuk menampilkan surat tersebut', {
+        'Silahkan mengetik `surat (nomor surat)` untuk menampilkan surat tersebut \n\n' +
+        'Silahkan mengetik `daftar hadist` untuk menampilkan list hadist yang ada \n\n' +
+        'Silahkan mengetik `hadist (nama hadist) (nomor hadist)` untuk menampilkan hadist tersebut \n\n', { 
+            parse_mode: "MarkdownV2"
     })
 })
 
@@ -34,12 +37,13 @@ axios.get(`https://api.banghasan.com/sholat/format/json/jadwal/kota/703/tanggal/
 
 bot.hears('jadwal shalat', ctx => {
     console.log(ctx.from)
-    bot.telegram.sendMessage(ctx.chat.id, "**JADWAL SHALAT HARI INI**" + "\n\n" + jadwalShalat
+    bot.telegram.sendMessage(ctx.chat.id, "*JADWAL SHALAT HARI INI*" + "\n\n" + jadwalShalat
         .replaceAll('"', "")
         .replaceAll('{', "")
         .replaceAll('}', "")
         .replaceAll(':', " : ")
-        .replaceAll(',', "\n\n"), {
+        .replaceAll(',', "\n\n"), { 
+            parse_mode: "MarkdownV2"
     })
 })
 
@@ -113,7 +117,8 @@ bot.hears('daftar hadist', async ctx => {
         });
 
     console.log(ctx.from)
-    await bot.telegram.sendMessage(ctx.chat.id, "**DAFTAR BUKU HADIST**" + "\n\n" + daftarHadist  .replaceAll('[', "")
+    await bot.telegram.sendMessage(ctx.chat.id, "*DAFTAR BUKU HADIST* " + "\n\n" + daftarHadist  
+    .replaceAll('[', "")
     .replaceAll('},', "\n")
     .replaceAll(']', "")
     .replaceAll('{', "")
@@ -125,5 +130,38 @@ bot.hears('daftar hadist', async ctx => {
     .replaceAll(","," ")
   )
 })
+
+bot.hears(/hadist (.+)/i, async ctx => {
+    let params_ayat = ctx.message.text.trim();
+    console.log(ctx.from)
+
+    try {
+        params_ayat = params_ayat.split("").slice(("hadist ").split("").length).join("");
+    } catch (err) {
+        console.log(err)
+    }
+
+    var input = params_ayat.split(" ");
+    var namaHadist = input[0].toLowerCase();
+    var nomorHadist = input[1];
+
+    await axios.get(`https://api.hadith.gading.dev/books/${namaHadist}/${nomorHadist}`)
+    .then(function (response) {
+        let hadist = response.data.data.contents.arab;
+        let arti = response.data.data.contents.id; 
+        let name = response.data.data.name;
+
+        console.log(ctx.from)
+        bot.telegram.sendMessage(ctx.chat.id, hadist + "\n\n" + arti + " (" + name + " : " + nomorHadist + ")")
+    })
+    .catch(function (error) {
+        console.log(error);
+    })
+    .finally(function () {
+    });
+
+    
+})
+
 
 bot.launch();
