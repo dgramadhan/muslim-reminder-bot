@@ -127,7 +127,9 @@ bot.hears('daftar hadist', async ctx => {
     .replaceAll('objTersedia', "")
     .replaceAll(':', "")
     .replaceAll('"', "")
-    .replaceAll(","," ")
+    .replaceAll(","," "), { 
+        parse_mode: "MarkdownV2"
+}
   )
 })
 
@@ -161,6 +163,30 @@ bot.hears(/hadist (.+)/i, async ctx => {
     });
 
     
+})
+
+function randomNumber(min, max) {
+    return Math.floor(Math.random() * (max - min) + min);
+}
+
+bot.hears('hari ini', async ctx => {
+    const arrHadist = ['abu-daud', 'ahmad', 'bukhari', 'darimi', 'ibnu-majah', 'malik', 'muslim', 'nasai', 'tirmidzi']
+    var nomor = randomNumber(0, 1500)
+    var hadistIni = arrHadist[randomNumber(0, 8)]
+    await axios.get(`https://api.hadith.gading.dev/books/${hadistIni}/${nomor}`)
+    .then(function (response) {
+        let hadist = response.data.data.contents.arab;
+        let arti = response.data.data.contents.id; 
+        let name = response.data.data.name;
+
+        bot.telegram.sendMessage(ctx.chat.id, hadist + "\n\n" + arti + " (" + name + " : " + nomor + ")")
+    })
+    .catch(function (error) {
+        console.log(error);
+    })
+    .finally(function () {
+    });
+
 })
 
 
